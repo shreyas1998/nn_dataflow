@@ -19,7 +19,7 @@ from collections import namedtuple
 from . import parallel_enum as pe
 from .. import util
 from .fmap_range import FmapPosition, FmapRange
-from .layer import ConvLayer, LocalRegionLayer
+from .layer import ConvLayer, LocalRegionLayer,Dw_convLayer, G_convLayer
 from .phy_dim2 import PhyDim2
 
 PARTITION_SCHEME_LIST = ['order',
@@ -115,6 +115,7 @@ class PartitionScheme(namedtuple('PartitionScheme', PARTITION_SCHEME_LIST)):
 
         # Batch partition.
         idx_bat = pidx[pe.BATP].h * self.pdims[pe.BATP].w + pidx[pe.BATP].w
+        #getting the effective index" based on requested pidx
         b_beg, b_end = util.get_ith_range((fp_beg.b, fp_end.b), idx_bat,
                                           self.pdims[pe.BATP].size())
 
@@ -145,7 +146,7 @@ class PartitionScheme(namedtuple('PartitionScheme', PARTITION_SCHEME_LIST)):
         Get the partitioned layer structure and batch size. Return partitioned
         layer, partitioned batch size, and partitioning op occupancy.
         '''
-
+        #making the actual partitions
         p_nifm = util.idivc(layer.nifm, self.pdims[pe.INPP].size())
         p_nofm = util.idivc(layer.nofm, self.pdims[pe.OUTP].size())
         p_hofm = util.idivc(layer.hofm, self.pdims[pe.OFMP].h)
@@ -154,6 +155,14 @@ class PartitionScheme(namedtuple('PartitionScheme', PARTITION_SCHEME_LIST)):
         if isinstance(layer, ConvLayer):
             p_layer = ConvLayer(p_nifm, p_nofm, (p_hofm, p_wofm),
                                 (layer.hfil, layer.wfil),
+                                strd=(layer.htrd, layer.wtrd))
+        elif isinstance(layer,Dw_convLayer):
+            p_layer = Dw_convLayer(p_nifm, p_nofm, (p_hofm, p_wofm),
+                                (layer.hfil, layer.wfil),
+                                strd=(layer.htrd, layer.wtrd))
+        elif isinstance(layer,G_convLayer):
+            p_layer = G_convLayer(p_nifm, p_nofm, (p_hofm, p_wofm),
+                                (layer.hfil, layer.wfil),no_g=layer.g, \
                                 strd=(layer.htrd, layer.wtrd))
         elif isinstance(layer, LocalRegionLayer):
             if self.pdims[pe.INPP].size() > 1:
@@ -267,4 +276,3 @@ class PartitionScheme(namedtuple('PartitionScheme', PARTITION_SCHEME_LIST)):
         assert not appl2frng or part.is_applicable_to_fmap_range()
 
         return part
-

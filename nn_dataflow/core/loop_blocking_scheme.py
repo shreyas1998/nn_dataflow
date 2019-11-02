@@ -464,7 +464,7 @@ class LoopBlockingScheme(object):
         '''
         Lazily calculate stats.
         '''
-
+        #print("stats",self.nld.unit_ops,self.lcnt,self.num_nodes)
         self.ops = self.nld.unit_ops * self.lcnt * self.num_nodes
         self.proc_time = self.nld.unit_time * self.lcnt
 
@@ -1033,4 +1033,3 @@ class LoopBlockingScheme(object):
                 * bufshr_wide_fetch[dce]
                 * (self.num_nodes // self.bufshr_grp_size[dce])
                 for dce in range(de.NUM)]
-

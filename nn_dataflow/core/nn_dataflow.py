@@ -344,4 +344,3 @@ class NNDataflow(object):
 
             else:
                 yield input_layout, None
-

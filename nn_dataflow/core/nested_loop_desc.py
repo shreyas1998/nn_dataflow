@@ -21,6 +21,7 @@ from . import mem_hier_enum as me
 from .. import util
 from .data_dim_loops import DataDimLoops
 
+
 NESTED_LOOP_DESC_LIST = ['loopcnt',
                          'usize_gbuf',
                          'usize_regf',
@@ -103,12 +104,15 @@ class NestedLoopDesc(namedtuple('NestedLoopDesc', NESTED_LOOP_DESC_LIST)):
         '''
         if dce is None:
             return sum(self.unit_access[mhe])
+
         return self.unit_access[mhe][dce]
 
     def total_ops(self):
         '''
         Get the total number of ops for all loops.
         '''
+        #print("ops"+str((self.unit_ops,util.prod(self.loopcnt))))
+        #print("tot"+str(self.unit_ops * util.prod(self.loopcnt)))
         return self.unit_ops * util.prod(self.loopcnt)
 
     def total_access_at_of(self, mhe, dce=None):
@@ -122,6 +126,6 @@ class NestedLoopDesc(namedtuple('NestedLoopDesc', NESTED_LOOP_DESC_LIST)):
             return sum(self.total_access_at_of(mhe, dce2)
                        for dce2 in range(de.NUM))
 
+        #print("total___"+str(mhe)+" "+str(dce)+ " "+str(self.data_loops[dce].take(self.loopcnt)))
         return self.unit_access_at_of(mhe, dce) \
                 * util.prod(self.data_loops[dce].take(self.loopcnt))
-

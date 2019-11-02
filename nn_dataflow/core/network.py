@@ -199,6 +199,7 @@ class Network(object):
             pl = self.__getitem__(p)
 
             # Ensure fmap sizes match. Allow padding.
+
             if not layer.is_valid_padding_sifm((pl.hofm, pl.wofm)):
                 raise ValueError('Network: {}, a previous layer of {}, '
                                  'has mismatch fmap size: {} vs. {}.'
@@ -247,4 +248,3 @@ class Network(object):
             prev_str = ' | '.join(['None' if n is None else n for n in prevs])
             str_ += '  Layer {} <- {}\n'.format(layer_name, prev_str)
         return str_
-

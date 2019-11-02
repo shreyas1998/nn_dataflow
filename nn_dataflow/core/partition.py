@@ -21,7 +21,7 @@ from . import parallel_enum as pe
 from .. import util
 from .fmap_range import FmapPosition, FmapRange
 from .int_range import IntRange
-from .layer import ConvLayer, LocalRegionLayer
+from .layer import ConvLayer, LocalRegionLayer,Dw_convLayer, G_convLayer
 from .partition_scheme import PartitionScheme
 from .phy_dim2 import PhyDim2
 
@@ -74,6 +74,14 @@ def gen_partition(layer, batch_size, dim_nodes, options, guaranteed=False):
                 continue
             else:
                 if isinstance(layer, ConvLayer):
+                    if not util.approx_dividable(layer.nifm,
+                                                 pdims[pe.INPP].size()):
+                        continue
+                elif isinstance(layer, Dw_convLayer):
+                    if not util.approx_dividable(layer.nifm,
+                                                 pdims[pe.INPP].size()):
+                        continue                         
+                elif isinstance(layer, G_convLayer):
                     if not util.approx_dividable(layer.nifm,
                                                  pdims[pe.INPP].size()):
                         continue
@@ -205,6 +213,38 @@ def proc_data_range(layer, batch_size, part, pidx):
         w_beg = w_beg * layer.wtrd
         w_end = max(w_beg, (w_end - 1) * layer.wtrd + layer.wfil)
 
+    elif isinstance(layer, G_convLayer):
+        # Ifmap channel partition.
+        idx_ifm = pidx[pe.INPP].h * part.dim(pe.INPP).w + pidx[pe.INPP].w
+        n_beg, n_end = util.get_ith_range((0, layer.nifm),
+                                          idx_ifm, part.size(pe.INPP))
+        # Fmap height tiling.
+        h_beg, h_end = h_orng
+        # xy_i = xy_o * stride + (0 ... sfil-1)
+        h_beg = h_beg * layer.htrd
+        h_end = max(h_beg, (h_end - 1) * layer.htrd + layer.hfil)
+
+        # Fmap width tiling.
+        w_beg, w_end = w_orng
+        w_beg = w_beg * layer.wtrd
+        w_end = max(w_beg, (w_end - 1) * layer.wtrd + layer.wfil)
+
+    elif isinstance(layer, Dw_convLayer):
+        # Ifmap channel partition.
+        idx_ifm = pidx[pe.INPP].h * part.dim(pe.INPP).w + pidx[pe.INPP].w
+        n_beg, n_end = util.get_ith_range((0, layer.nifm),
+                                          idx_ifm, part.size(pe.INPP))
+        # Fmap height tiling.
+        h_beg, h_end = h_orng
+        # xy_i = xy_o * stride + (0 ... sfil-1)
+        h_beg = h_beg * layer.htrd
+        h_end = max(h_beg, (h_end - 1) * layer.htrd + layer.hfil)
+
+        # Fmap width tiling.
+        w_beg, w_end = w_orng
+        w_beg = w_beg * layer.wtrd
+        w_end = max(w_beg, (w_end - 1) * layer.wtrd + layer.wfil)
+
     elif isinstance(layer, LocalRegionLayer):
         # Ifmap channel partition.
         n_beg, n_end = n_orng
@@ -230,6 +270,13 @@ def proc_data_range(layer, batch_size, part, pidx):
 
     if isinstance(layer, ConvLayer):
         filrng = (ifrng.beg_end('n'), ofrng.beg_end('n'))
+
+    elif isinstance(layer, G_convLayer):
+        filrng = (ifrng.beg_end('n'), ofrng.beg_end('n'))
+
+    elif isinstance(layer, Dw_convLayer):
+        filrng = (ifrng.beg_end('n'), ofrng.beg_end('n'))
+
     elif isinstance(layer, LocalRegionLayer):
         # No filter.
         filrng = (IntRange(0, 0), IntRange(0, 0))
@@ -393,4 +440,3 @@ def _unit_nhops_to_ofm(ofmap_layout, ofm_dict, fwd=False):
                     nhops += util.idivc(ofrng.size() * dist, 2)
 
     return nhops
-

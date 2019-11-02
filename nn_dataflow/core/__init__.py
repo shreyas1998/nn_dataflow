@@ -28,7 +28,7 @@ from .fmap_range import FmapPosition, FmapRange, FmapRangeMap
 from .int_range import IntRange
 from .inter_layer_pipeline import InterLayerPipeline
 from .layer import Layer, InputLayer, ConvLayer, FCLayer, \
-        LocalRegionLayer, PoolingLayer, EltwiseLayer
+        LocalRegionLayer, PoolingLayer, EltwiseLayer,Dw_convLayer,G_convLayer
 from .loop_blocking_scheme import LoopBlockingScheme
 from .map_strategy import MapStrategy, MapStrategyEyeriss
 from .nested_loop_desc import NestedLoopDesc
@@ -46,4 +46,3 @@ from .scheduling_constraint import SchedulingConstraint, \
         SchedulingConstraintLayerPipeline
 
 from .nn_dataflow import NNDataflow
-
