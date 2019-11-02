@@ -15,26 +15,30 @@ program. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
 
 from nn_dataflow.core import Network
 from nn_dataflow.core import InputLayer, ConvLayer, FCLayer, \
-        PoolingLayer, EltwiseLayer
+        PoolingLayer, EltwiseLayer,G_convLayer,Dw_convLayer
 
 '''
-ResNet-152
+group-ResNet-101
 
-He, Zhang, Ren, and Sun, 2015
 '''
+gno= 64
 
-NN = Network('ResNet')
+NN = Network('g_resnet101')
 
 NN.set_input_layer(InputLayer(3, 224))
 
+
 NN.add('conv1', ConvLayer(3, 64, 112, 7, 2))
+
+
 NN.add('pool1', PoolingLayer(64, 56, 3, 2))
 
 RES_PREV = 'pool1'
 
 for i in range(3):
     NN.add('conv2_{}_a'.format(i), ConvLayer(64 if i == 0 else 256, 64, 56, 1))
-    NN.add('conv2_{}_b'.format(i), ConvLayer(64, 64, 56, 3))
+    #NN.add('conv2_{}_b'.format(i), Dw_convLayer(64, 64, 56, 3))
+    NN.add('conv2_{}_b'.format(i), G_convLayer(64, 64, 56, 3,no_g= gno))
     NN.add('conv2_{}_c'.format(i), ConvLayer(64, 256, 56, 1))
 
     # With residual shortcut.
@@ -45,11 +49,12 @@ for i in range(3):
            prevs=(RES_PREV, 'conv2_{}_c'.format(i)))
     RES_PREV = 'conv2_{}_res'.format(i)
 
-for i in range(8):
+for i in range(4):
     NN.add('conv3_{}_a'.format(i),
            ConvLayer(256, 128, 28, 1, 2) if i == 0
            else ConvLayer(512, 128, 28, 1))
-    NN.add('conv3_{}_b'.format(i), ConvLayer(128, 128, 28, 3))
+    #NN.add('conv3_{}_b'.format(i), Dw_convLayer(128, 128, 28, 3))
+    NN.add('conv3_{}_b'.format(i), G_convLayer(128, 128, 28, 3,no_g= 2*gno))
     NN.add('conv3_{}_c'.format(i), ConvLayer(128, 512, 28, 1))
 
     # With residual shortcut.
@@ -60,11 +65,12 @@ for i in range(8):
            prevs=(RES_PREV, 'conv3_{}_c'.format(i)))
     RES_PREV = 'conv3_{}_res'.format(i)
 
-for i in range(36):
+for i in range(23):
     NN.add('conv4_{}_a'.format(i),
            ConvLayer(512, 256, 14, 1, 2) if i == 0
            else ConvLayer(1024, 256, 14, 1))
-    NN.add('conv4_{}_b'.format(i), ConvLayer(256, 256, 14, 3))
+    #NN.add('conv4_{}_b'.format(i), Dw_convLayer(256, 256, 14, 3))
+    NN.add('conv4_{}_b'.format(i), G_convLayer(256, 256, 14, 3,no_g= 4*gno))
     NN.add('conv4_{}_c'.format(i), ConvLayer(256, 1024, 14, 1))
 
     # With residual shortcut.
@@ -79,7 +85,8 @@ for i in range(3):
     NN.add('conv5_{}_a'.format(i),
            ConvLayer(1024, 512, 7, 1, 2) if i == 0
            else ConvLayer(2048, 512, 7, 1))
-    NN.add('conv5_{}_b'.format(i), ConvLayer(512, 512, 7, 3))
+    #NN.add('conv5_{}_b'.format(i), Dw_convLayer(512, 512,7, 3))
+    NN.add('conv5_{}_b'.format(i), G_convLayer(512, 512, 7, 3,no_g= 8*gno))
     NN.add('conv5_{}_c'.format(i), ConvLayer(512, 2048, 7, 1))
 
     # With residual shortcut.
