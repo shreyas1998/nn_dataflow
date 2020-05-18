@@ -2,7 +2,29 @@ from nn_dataflow.core import Network
 from nn_dataflow.core import InputLayer, ConvLayer, FCLayer, \
         PoolingLayer, EltwiseLayer,Dw_convLayer, G_convLayer
 
+#uncomment one of the groups to run the appropriate version fo mobilenet, one is vanilla version
+#The second one is the group convolution version
+'''
+The format for specifying group convolution can be specified using the following format
+G_convLayer(nifm, nofm, sofm, sfil,no_g,strd=1)
 
+The format for specifying depthwise-convolution can be specified using the following format
+G_convLayer(nifm, nofm, sofm, sfil,no_g,strd=1)
+Dw_convLayer(nifm, nofm, sofm, sfil, strd=1)
+
+nifm= number of input channels
+nofm= number of output channels
+sofm= output size (H or W)
+sfil= filter dimension
+strd= stride
+no_g= 'g' or no. of groups as per group convolution literature
+Inorder to get G=1 , we set no_g =nifm 
+Inorder to get G=2 , we set no_g =nifm/2
+.
+.
+. 
+
+'''
 NN= Network('Mobilenet')
 NN.set_input_layer(InputLayer(3, 224))
 
@@ -45,12 +67,11 @@ NN.add('conv14_dw_b', ConvLayer(1024, 1024, 7, 1, 1))
 
 NN.add('pool1', PoolingLayer(1024, 1, 7, 1))
 NN.add('fc1', FCLayer(1024, 1000))
-
+'''
 
 
 '''
 #Group conv version of mobile_net
-
 NN= Network('Mobilenet')
 NN.set_input_layer(InputLayer(3, 224))
 
