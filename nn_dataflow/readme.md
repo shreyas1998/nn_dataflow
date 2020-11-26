@@ -1,6 +1,6 @@
 # DRACO
 
-DRACO is an extension of the nn-dataflow simulator capable of simulating group and depthwise convolutions. 
+[DRACO](https://arxiv.org/abs/2006.15103) is an extension of the nn-dataflow simulator capable of simulating group and depthwise convolutions. 
 This is part of the paper (DRACO: Co-Optimizing Hardware Utilization, and
 Performance of DNNs on Systolic Accelerator) which will be presented in [ISVLSI-20](http://www.isvlsi.org/).
 
