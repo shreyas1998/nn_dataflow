@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -21,7 +22,7 @@ from . import parallel_enum as pe
 from .. import util
 from .fmap_range import FmapPosition, FmapRange
 from .int_range import IntRange
-from .layer import ConvLayer, LocalRegionLayer,Dw_convLayer, G_convLayer
+from .layer import ConvLayer, LocalRegionLayer, Dw_convLayer, G_convLayer
 from .partition_scheme import PartitionScheme
 from .phy_dim2 import PhyDim2
 
@@ -53,7 +54,7 @@ def gen_partition(layer, batch_size, dim_nodes, options, guaranteed=False):
         # Batch partitoning.
         if (not options.partition_batch) and pdims[pe.BATP].size() > 1:
             continue
-        elif batch_size % pdims[pe.BATP].size() != 0:
+        if batch_size % pdims[pe.BATP].size() != 0:
             continue
 
         # Force each partitioning to fully utilize one dimension before
@@ -72,22 +73,21 @@ def gen_partition(layer, batch_size, dim_nodes, options, guaranteed=False):
 
             if (not options.partition_ifmaps) and pdims[pe.INPP].size() > 1:
                 continue
-            else:
-                if isinstance(layer, ConvLayer):
-                    if not util.approx_dividable(layer.nifm,
+            if isinstance(layer, ConvLayer):
+                if not util.approx_dividable(layer.nifm,
+                                             pdims[pe.INPP].size()):
+                    continue
+            elif isinstance(layer, Dw_convLayer):
+                if not util.approx_dividable(layer.nifm,
                                                  pdims[pe.INPP].size()):
-                        continue
-                elif isinstance(layer, Dw_convLayer):
-                    if not util.approx_dividable(layer.nifm,
+                    continue                         
+            elif isinstance(layer, G_convLayer):
+                if not util.approx_dividable(layer.nifm,
                                                  pdims[pe.INPP].size()):
-                        continue                         
-                elif isinstance(layer, G_convLayer):
-                    if not util.approx_dividable(layer.nifm,
-                                                 pdims[pe.INPP].size()):
-                        continue
-                elif isinstance(layer, LocalRegionLayer):
-                    if pdims[pe.INPP].size() > 1:
-                        continue
+                    continue
+            elif isinstance(layer, LocalRegionLayer):
+                if pdims[pe.INPP].size() > 1:
+                    continue
         else:
             assert not options.partition_ifmaps
             if pdims[pe.INPP].size() != 1:
@@ -270,7 +270,7 @@ def proc_data_range(layer, batch_size, part, pidx):
 
     if isinstance(layer, ConvLayer):
         filrng = (ifrng.beg_end('n'), ofrng.beg_end('n'))
-
+        
     elif isinstance(layer, G_convLayer):
         filrng = (ifrng.beg_end('n'), ofrng.beg_end('n'))
 
@@ -372,7 +372,7 @@ def _unit_nhops_to_fil(layer, filter_nodes, fil_dict, fwd=False):
                 # Each forward step, get the min-distance pair of source and
                 # destination.
                 src, dst = min(itertools.product(src_set, dst_set),
-                               key=lambda (s, d): d.hop_dist(s))
+                               key=lambda sd: sd[1].hop_dist(sd[0]))
                 dst_set.remove(dst)
                 src_set.add(dst)
                 nhops += fil_size * dst.hop_dist(src)
@@ -440,3 +440,4 @@ def _unit_nhops_to_ofm(ofmap_layout, ofm_dict, fwd=False):
                     nhops += util.idivc(ofrng.size() * dist, 2)
 
     return nhops
+

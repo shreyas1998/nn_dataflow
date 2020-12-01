@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -28,7 +29,7 @@ class TestNNDataflowSearch(unittest.TestCase):
         self.assertTrue(os.path.isdir(
             os.path.join(self.cwd, 'nn_dataflow', 'tools')))
 
-        self.args = ['python', 'nn_dataflow/tools/nn_dataflow_search.py',
+        self.args = ['python3', '-m', 'nn_dataflow.tools.nn_dataflow_search',
                      'alex_net', '--batch', '1',
                      '--node', '1', '1', '--array', '16', '16',
                      '--regf', '512', '--gbuf', '131072']
@@ -52,7 +53,10 @@ class TestNNDataflowSearch(unittest.TestCase):
         self.assertEqual(ret, 2)
 
     def _call(self, args):
-        return subprocess.call(args, cwd=self.cwd,
-                               stderr=subprocess.STDOUT,
-                               stdout=open(os.devnull, 'w'))
+        with open(os.devnull, 'w') as output:
+            result = subprocess.call(args, cwd=self.cwd,
+                                     stderr=subprocess.STDOUT,
+                                     stdout=output)
+
+        return result
 

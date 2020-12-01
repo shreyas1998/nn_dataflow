@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -28,7 +29,7 @@ from .fmap_range import FmapPosition, FmapRange, FmapRangeMap
 from .int_range import IntRange
 from .inter_layer_pipeline import InterLayerPipeline
 from .layer import Layer, InputLayer, ConvLayer, FCLayer, \
-        LocalRegionLayer, PoolingLayer, EltwiseLayer,Dw_convLayer,G_convLayer
+        LocalRegionLayer, PoolingLayer, Dw_convLayer, G_convLayer, EltwiseLayer
 from .loop_blocking_scheme import LoopBlockingScheme
 from .map_strategy import MapStrategy, MapStrategyEyeriss
 from .nested_loop_desc import NestedLoopDesc
@@ -46,3 +47,4 @@ from .scheduling_constraint import SchedulingConstraint, \
         SchedulingConstraintLayerPipeline
 
 from .nn_dataflow import NNDataflow
+

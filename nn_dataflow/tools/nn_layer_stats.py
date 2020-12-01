@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -67,8 +68,8 @@ def layer_stats(args):
         elif isinstance(layer, ConvLayer):
             convs += 1
 
-        ifmap_size = layer.total_ifmap_size(word_bytes) * batch / KILO
-        ofmap_size = layer.total_ofmap_size(word_bytes) * batch / KILO
+        ifmap_size = layer.total_ifmap_size(batch, word_bytes) / KILO
+        ofmap_size = layer.total_ofmap_size(batch, word_bytes) / KILO
         try:
             filter_size = layer.total_filter_size(word_bytes) / KILO
         except AttributeError:

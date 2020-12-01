@@ -69,7 +69,7 @@ for no_bl in range(len(num_blocks)):
         if(strd[no_sqz])==2:
             inp_h= 1+((inp_h-1)/2)
 
-        prevs= sqznxt_blk(Network= NN, nifm= nifm,nofm= nofm, inp_h= inp_h,strd= strd[no_sqz],
+        prevs= sqznxt_blk(Network= NN, nifm= nifm,nofm= nofm, inp_h= int(inp_h),strd= strd[no_sqz],
                             no_sqz= "bno"+str(no_bl+1)+"_"+str(no_sqz+1), _prevs=prevs, gno=2)
         nifm= nofm
     #print("{}block_done".format(no_bl))

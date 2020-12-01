@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -14,6 +15,7 @@ program. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
 """
 
 from collections import namedtuple
+from functools import reduce
 from operator import add, sub, neg, mul
 
 class PhyDim2(namedtuple('PhyDim2', ['h', 'w'])):

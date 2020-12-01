@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -40,12 +41,12 @@ class TestDataDimLoops(unittest.TestCase):
 
     def test_invalid_args(self):
         ''' Invalid arguments. '''
-        with self.assertRaisesRegexp(ValueError,
-                                     'DataDimLoops: .*LoopEnum.*'):
+        with self.assertRaisesRegex(ValueError,
+                                    'DataDimLoops: .*LoopEnum.*'):
             _ = DataDimLoops(le.NUM + 1)
 
-        with self.assertRaisesRegexp(ValueError,
-                                     'DataDimLoops: .*LoopEnum.*'):
+        with self.assertRaisesRegex(ValueError,
+                                    'DataDimLoops: .*LoopEnum.*'):
             _ = DataDimLoops(le.IFM, le.NUM)
 
     def test_loops(self):

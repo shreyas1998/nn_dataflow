@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -131,7 +132,7 @@ class DataLayout(namedtuple('DataLayout', DATA_LAYOUT_LIST)):
                 # Each forward step, get the min-distance pair of source and
                 # destination.
                 src, dst = min(itertools.product(src_set, dst_set),
-                               key=lambda (s, d): d.hop_dist(s))
+                               key=lambda sd: sd[1].hop_dist(sd[0]))
                 dst_set.remove(dst)
                 src_set.add(dst)
                 nhops += total_size * dst.hop_dist(src)

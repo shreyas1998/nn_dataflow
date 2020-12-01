@@ -19,7 +19,7 @@ from nn_dataflow.core import InputLayer, ConvLayer, FCLayer, \
         PoolingLayer, EltwiseLayer
 
 '''
-ResNet-152
+ResNet-50
 
 He, Zhang, Ren, and Sun, 2015
 '''
@@ -46,7 +46,7 @@ for i in range(3):
            prevs=(RES_PREV, 'conv2_{}_c'.format(i)))
     RES_PREV = 'conv2_{}_res'.format(i)
 
-for i in range(8):
+for i in range(4):
     NN.add('conv3_{}_a'.format(i),
            ConvLayer(256, 128, 28, 1, 2) if i == 0
            else ConvLayer(512, 128, 28, 1))
@@ -61,7 +61,7 @@ for i in range(8):
            prevs=(RES_PREV, 'conv3_{}_c'.format(i)))
     RES_PREV = 'conv3_{}_res'.format(i)
 
-for i in range(36):
+for i in range(6):
     NN.add('conv4_{}_a'.format(i),
            ConvLayer(512, 256, 14, 1, 2) if i == 0
            else ConvLayer(1024, 256, 14, 1))
@@ -94,4 +94,3 @@ for i in range(3):
 NN.add('pool5', PoolingLayer(2048, 1, 7))
 
 NN.add('fc', FCLayer(2048, 1000))
-

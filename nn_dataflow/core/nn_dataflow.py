@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -14,7 +15,6 @@ program. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
 """
 
 from collections import defaultdict
-import itertools
 import sys
 
 from . import partition
@@ -28,7 +28,7 @@ from .nn_dataflow_scheme import NNDataflowScheme
 from .resource import Resource
 from .scheduling import SchedulingCondition, Scheduling
 
-class NNDataflow(object):
+class NNDataflow():
     '''
     Search optimized dataflows for neural networks.
     '''
@@ -325,22 +325,12 @@ class NNDataflow(object):
                 regions=(input_region,),
                 parts=(part.projection(input_region, appl2frng=True),))
 
-            if ext_layers:
-                for ext_parts in itertools.product(
-                        *[partition.gen_partition(ext_layer, self.batch_size,
-                                                  ext_region.dim, options,
-                                                  guaranteed=True)
-                          for ext_layer in ext_layers]):
-                    ext_layout_dict = dict(zip(
-                        ext_layer_names,
-                        [DataLayout(
-                            frngs=(ext_frng,),
-                            regions=(ext_region,),
-                            parts=(ext_part.projection(ext_region,
-                                                       appl2frng=True),))
-                         for ext_part, ext_frng in zip(ext_parts, ext_frngs)]))
+            ext_layout_dict = dict(zip(
+                ext_layer_names,
+                [DataLayout(
+                    frngs=(ext_frng,),
+                    regions=(ext_region,),
+                    parts=(part.projection(ext_region, appl2frng=True),))
+                 for ext_frng in ext_frngs])) if ext_layers else None
 
-                    yield input_layout, ext_layout_dict
-
-            else:
-                yield input_layout, None
+            yield input_layout, ext_layout_dict

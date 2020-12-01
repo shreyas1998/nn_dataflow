@@ -33,7 +33,7 @@ def add_trans_layer(network,trans_id,nifm_prev,gr_rate,no_dl_prev,bott_prev,_pre
 
     #Maxpool or average pool?how to specify, or we don't need to worry about it
 
-    pooled= network.add(trans+'pool', PoolingLayer(nifm_prev*2, bott_prev/2, 2, 2))
+    pooled= network.add(trans+'pool', PoolingLayer(nifm_prev*2, int(bott_prev/2), 2, 2))
 
     return(trans+'pool')
 

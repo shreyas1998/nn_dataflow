@@ -1,11 +1,15 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
+
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
 Initiative.
+
 This program is distributed in the hope that it will be useful, but WITHOUT ANY
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the BSD-3 License for more details.
+
 You should have received a copy of the Modified BSD-3 License along with this
 program. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
 """
@@ -18,15 +22,15 @@ from .data_dim_loops import DataDimLoops
 class Layer(util.ContentHashClass):
     '''
     Base NN layer.
+
     Includes only the output neuron parameters.
+
     nofm: # ofmap channels
     hofm, wofm: ofmap height/width
     htrd, wtrd: stride height/width
     '''
 
-    def __init__(self, nofm, sofm,strd =1 ):
-
-
+    def __init__(self, nofm, sofm, strd=1):
         if isinstance(sofm, int):
             hofm = sofm
             wofm = sofm
@@ -50,7 +54,6 @@ class Layer(util.ContentHashClass):
                              'needs to be either one integer or '
                              'a pair of integers'.format(strd))
         assert htrd > 0 and wtrd > 0
-
 
         self.nofm = nofm
         self.hofm = hofm
@@ -86,6 +89,7 @@ class Layer(util.ContentHashClass):
     def ofmap_size(self, batch_size=1, word_size=1):
         '''
         Get size of one output fmap with `batch_size`.
+
         If `word_size` is set to word byte size, return size in bytes.
         '''
         return self.hofm * self.wofm * batch_size * word_size
@@ -93,6 +97,7 @@ class Layer(util.ContentHashClass):
     def total_ofmap_size(self, batch_size=1, word_size=1):
         '''
         Get total size of all output fmaps with `batch_size`.
+
         If `word_size` is set to word byte size, return size in bytes.
         '''
         return self.nofm * self.ofmap_size(batch_size, word_size)
@@ -100,6 +105,7 @@ class Layer(util.ContentHashClass):
     def ifmap_size(self, batch_size=1, word_size=1):
         '''
         Get size of one input fmap with `batch_size`.
+
         If `word_size` is set to word byte size, return size in bytes.
         '''
         return self.input_layer().ofmap_size(batch_size, word_size)
@@ -107,6 +113,7 @@ class Layer(util.ContentHashClass):
     def total_ifmap_size(self, batch_size=1, word_size=1):
         '''
         Get total size of all input fmaps with `batch_size`.
+
         If `word_size` is set to word byte size, return size in bytes.
         '''
         return self.input_layer().total_ofmap_size(batch_size, word_size)
@@ -134,7 +141,6 @@ class Layer(util.ContentHashClass):
 
         h_padding_rng = sorted((self.hofm * self.htrd, self.hifm))
         w_padding_rng = sorted((self.wofm * self.wtrd, self.wifm))
-
         return (h_padding_rng[0] <= hifm <= h_padding_rng[1]
                 and w_padding_rng[0] <= wifm <= w_padding_rng[1])
 
@@ -170,6 +176,7 @@ class InputLayer(Layer):
 class ConvLayer(Layer):
     '''
     NN convolutional layer parameters.
+
     nifm (C): # ifmap channels
     nofm (M): # ofmap channels
     hifm, wifm (H): ifmap height/width
@@ -180,7 +187,7 @@ class ConvLayer(Layer):
 
     def __init__(self, nifm, nofm, sofm, sfil, strd=1):
         super(ConvLayer, self).__init__(nofm, sofm, strd=strd)
-
+        
         if isinstance(sfil, int):
             hfil = sfil
             wfil = sfil
@@ -217,6 +224,7 @@ class ConvLayer(Layer):
     def filter_size(self, word_size=1):
         '''
         Get size of one weight filter.
+
         If `word_size` is set to word byte size, return size in bytes.
         '''
         return self.hfil * self.wfil * word_size
@@ -224,6 +232,7 @@ class ConvLayer(Layer):
     def total_filter_size(self, word_size=1):
         '''
         Get total size of all weight filters.
+
         If `word_size` is set to word byte size, return size in bytes.
         '''
         return self.nifm * self.nofm * self.filter_size(word_size)
@@ -323,6 +332,7 @@ class G_convLayer(Layer):
     '''
 
     def __init__(self, nifm, nofm, sofm, sfil,no_g,strd=1):
+        
         super(G_convLayer, self).__init__(nofm, sofm, strd=strd)
 
         if isinstance(sfil, int):
@@ -386,11 +396,12 @@ class G_convLayer(Layer):
                 'sofm={}'.format(repr((self.hofm, self.wofm))),
                 'sfil={}'.format(repr((self.hfil, self.wfil))),
                 'strd={}'.format(repr((self.htrd, self.wtrd)))]))
-
 class FCLayer(ConvLayer):
     '''
     NN fully-connected layer parameters.
+
     As a special case of CONVLayer.
+
     hifm = hfil, wifm = wfil, strd = 1, hofm = wofm = 1
     '''
 
@@ -411,6 +422,7 @@ class LocalRegionLayer(Layer):
     '''
     NN layer which computes on a local region. The layer has no or limited
     shared weights, whose impact can be ignored during scheduling.
+
     Includes pooling layer, normalization layer, and element-wise layer.
     '''
 
@@ -475,7 +487,9 @@ class LocalRegionLayer(Layer):
 class PoolingLayer(LocalRegionLayer):
     '''
     NN pooling layer parameters.
+
     As a special case of LocalRegionLayer.
+
     nreg = ntrd = 1
     '''
 
@@ -500,7 +514,9 @@ class PoolingLayer(LocalRegionLayer):
 class EltwiseLayer(LocalRegionLayer):
     '''
     NN element-wise layer parameters.
+
     As a special case of LocalRegionLayer.
+
     nreg = ntrd, sreg = 1
     '''
 
@@ -515,4 +531,5 @@ class EltwiseLayer(LocalRegionLayer):
             ', '.join([
                 'nofm={}'.format(repr(self.nofm)),
                 'sofm={}'.format(repr((self.hofm, self.wofm))),
-'nreg={}'.format(repr(self.nreg))]))
+                'nreg={}'.format(repr(self.nreg))]))
+

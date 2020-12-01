@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -17,7 +18,7 @@ from collections import OrderedDict
 
 from .layer import Layer, InputLayer
 
-class Network(object):
+class Network():
     '''
     NN topology. Support DAG structure of layers.
     '''
@@ -83,7 +84,7 @@ class Network(object):
                                    'has not been added to the network'.
                                    format(p))
         else:
-            prevs = (self.layer_dict.keys()[-1],)
+            prevs = (list(self.layer_dict.keys())[-1],)
 
         self.layer_dict[layer_name] = layer
         self.prevs_dict[layer_name] = prevs
@@ -199,7 +200,6 @@ class Network(object):
             pl = self.__getitem__(p)
 
             # Ensure fmap sizes match. Allow padding.
-
             if not layer.is_valid_padding_sifm((pl.hofm, pl.wofm)):
                 raise ValueError('Network: {}, a previous layer of {}, '
                                  'has mismatch fmap size: {} vs. {}.'
@@ -248,3 +248,4 @@ class Network(object):
             prev_str = ' | '.join(['None' if n is None else n for n in prevs])
             str_ += '  Layer {} <- {}\n'.format(layer_name, prev_str)
         return str_
+

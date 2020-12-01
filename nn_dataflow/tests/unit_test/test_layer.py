@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -56,7 +57,7 @@ class TestLayer(unittest.TestCase):
 
     def test_invalid_sofm(self):
         ''' Invalid sofm. '''
-        with self.assertRaisesRegexp(ValueError, 'Layer: .*sofm.*'):
+        with self.assertRaisesRegex(ValueError, 'Layer: .*sofm.*'):
             _ = ConvLayer(3, 64, [28, 14, 7], 3)
 
     def test_diff_hwtrd(self):
@@ -67,7 +68,7 @@ class TestLayer(unittest.TestCase):
 
     def test_invalid_strd(self):
         ''' Invalid stride. '''
-        with self.assertRaisesRegexp(ValueError, 'Layer: .*strd.*'):
+        with self.assertRaisesRegex(ValueError, 'Layer: .*strd.*'):
             _ = ConvLayer(3, 64, 28, 3, strd=[2, 3, 4])
 
     def test_ifmap(self):
@@ -160,7 +161,7 @@ class TestLayer(unittest.TestCase):
     def test_is_valid_padding_sifm_inv(self):
         ''' Invalid argument for is_valid_padding_sifm. '''
         clayer = ConvLayer(3, 64, 28, 3, strd=2)
-        with self.assertRaisesRegexp(ValueError, 'Layer: .*sifm.*'):
+        with self.assertRaisesRegex(ValueError, 'Layer: .*sifm.*'):
             _ = clayer.is_valid_padding_sifm([3])
 
     def test_eq(self):
@@ -291,7 +292,7 @@ class TestConvLayer(unittest.TestCase):
 
     def test_filter_size_invalid(self):
         ''' Invalid filter size. '''
-        with self.assertRaisesRegexp(ValueError, 'ConvLayer: .*sfil.*'):
+        with self.assertRaisesRegex(ValueError, 'ConvLayer: .*sfil.*'):
             _ = ConvLayer(3, 64, [28, 14], [3, 3, 3])
 
     def test_fclayer(self):
@@ -350,12 +351,12 @@ class TestLocalRegionLayer(unittest.TestCase):
 
     def test_invalid_sreg(self):
         ''' Invalid region size. '''
-        with self.assertRaisesRegexp(ValueError, 'LocalRegionLayer: .*sreg.*'):
+        with self.assertRaisesRegex(ValueError, 'LocalRegionLayer: .*sreg.*'):
             _ = LocalRegionLayer(64, 28, 1, [2, 4, 6])
 
     def test_mix_sreg(self):
         ''' Mix region of n-dimension and h/w-dimension. '''
-        with self.assertRaisesRegexp(ValueError, 'LocalRegionLayer: .*mix.*'):
+        with self.assertRaisesRegex(ValueError, 'LocalRegionLayer: .*mix.*'):
             _ = LocalRegionLayer(64, 28, 2, 2)
 
     def test_poolinglayer(self):

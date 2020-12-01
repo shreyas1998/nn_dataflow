@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -15,7 +16,7 @@ program. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
 
 import heapq
 import itertools
-from multiprocessing import Pool
+from multiprocessing.pool import Pool
 
 from . import loop_blocking_solver
 from . import loop_enum as le
@@ -65,7 +66,7 @@ def skip_conv(bl_ts, bl_ords):
 
     outer_level_innermost_nt_loop = None
 
-    for t_, ord_ in itertools.izip_longest(bl_ts, bl_ords, fillvalue=None):
+    for t_, ord_ in itertools.zip_longest(bl_ts, bl_ords, fillvalue=None):
 
         # Non-trivial loops.
         nt_loops = [lpe for lpe in range(le.NUM) if t_[lpe] > 1]
@@ -104,7 +105,7 @@ def skip_conv(bl_ts, bl_ords):
 def _loop_blocking_cmp_key(options, cost):
     if options.opt_goal == 'ed':
         return lambda lbs: lbs.get_access_cost(cost) * lbs.time
-    elif options.opt_goal == 'd':
+    if options.opt_goal == 'd':
         return lambda lbs: (lbs.time, lbs.get_access_cost(cost))
     assert options.opt_goal == 'e'
     return lambda lbs: (lbs.get_access_cost(cost), lbs.time)
@@ -188,7 +189,7 @@ def gen_loopblocking(nested_loop_desc, resource, part, constraint, cost,
         retrieve_func = retrieve_result()
     else:
         pool = None
-        apply_func = apply
+        apply_func = util.apply
         retrieve_func = retrieve_result_st()
 
     # Exhaustive generators.

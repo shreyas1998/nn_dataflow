@@ -16,7 +16,7 @@ def sqznxt_blk(Network,nifm,nofm,inp_h,strd,no_sqz,_prevs):
         redu=1
     elif (nifm> nofm):
         redu=0.25
-    #print("before"+" "+str(inp_h))
+
     Network.add('{}_sqz1_a'.format(i), ConvLayer(nifm,int(redu*nifm),inp_h,1,strd= strd),prevs=_prevs)
     Network.add('{}_sqz1_b'.format(i), ConvLayer(int(nifm*redu),int(nifm*redu*0.5),inp_h,1))
 
@@ -67,7 +67,7 @@ for no_bl in range(len(num_blocks)):
         if(strd[no_sqz])==2:
             inp_h= 1+((inp_h-1)/2)
 
-        prevs= sqznxt_blk(Network= NN, nifm= nifm,nofm= nofm, inp_h= inp_h,strd= strd[no_sqz],
+        prevs= sqznxt_blk(Network= NN, nifm= nifm,nofm= nofm, inp_h= int(inp_h),strd= strd[no_sqz],
                             no_sqz= "bno"+str(no_bl+1)+"_"+str(no_sqz+1), _prevs=prevs)
         nifm= nofm
     #print("{}block_done".format(no_bl))

@@ -23,14 +23,15 @@ Inorder to get G=2 , we set no_g =nifm/2
 .
 .
 . 
-
 '''
+
+
 NN= Network('Mobilenet')
 NN.set_input_layer(InputLayer(3, 224))
 
 
 #Network.add('conv_sqz1_{}_a'.format(i), ConvLayer(nifm,int(redu*nifm),inp_h,1,strd= strd),prevs=_prevs)
-
+'''
 NN.add('conv1', ConvLayer(3, 32, 112, 3, 2))
 
 NN.add('conv2_dw_a', Dw_convLayer(32, 32, 112, 3, 1))
@@ -70,7 +71,7 @@ NN.add('fc1', FCLayer(1024, 1000))
 '''
 
 
-'''
+
 #Group conv version of mobile_net
 NN= Network('Mobilenet')
 NN.set_input_layer(InputLayer(3, 224))
@@ -115,4 +116,4 @@ NN.add('conv14_dw_b', ConvLayer(1024, 1024, 7, 1, 1))
 NN.add('pool1', PoolingLayer(1024, 1, 7, 1))
 NN.add('fc1', FCLayer(1024, 1000))
 
-'''
+

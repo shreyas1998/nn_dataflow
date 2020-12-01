@@ -1,6 +1,5 @@
 """ $lic$
-Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
-Stanford University
+Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -14,9 +13,46 @@ You should have received a copy of the Modified BSD-3 License along with this
 program. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
 """
 
+'''
+This is an extension of the nn dataflow simulator with the added functionality of depthwise
+and group convolution layers
+
+All the test cases have been inspired from the original tests which can be found in nn_dataflow/tests 
+directory.
+
+All the results of the DRACO paper were obtained from test_eyeriss_isca16 and test_eyeriss_isscc16
+
+test_eyeriss_isca16 gives us the energy breakdown of various memeory levels present in eyeriss- DRAM,
+Global buffer, PE spads, Array(the network), and ALU.
+
+test_eyeriss_isscc16 gives us Power, Processing Latency, Ops, Active PEs, Filter size.
+
+Inorder to change the map strategy, relative memory costs and no. of PEs,Global buffer size
+and PE spad size, change these parameters in the setUp method.
+
+Inorder to change the network chosen for simulation change it in the test_eyeriss_isca16 and
+test_eyeriss_isscc16 respectively based on the paramter that needs to be measured.
+
+To define a custom network , one needs to add it to the nns directory in the virtual environment
+or the location where the nn-dataflow package is installed.
+
+For usage of group and depthwise convolution please check the existing implementations in the nns
+directory in the nn-dataflow library (extended). For more information regarding the layer interface
+one can look into layer.py in core directory of the nn-dataflow library (extended).
+
+Usage-
+python -m unittest test_draco.TestNNDataflow.test_eyeriss_isca16    
+
+python -m unittest test_draco.TestNNDataflow.test_eyeriss_isscc16
+
+Both output pickled files containing the relevant output.
+
+'''
+
+
+
 import unittest
 import sys
-
 from io import StringIO
 
 from nn_dataflow.core import Cost
@@ -29,8 +65,10 @@ from nn_dataflow.core import NNDataflow
 from nn_dataflow.core import Option
 from nn_dataflow.core import PhyDim2
 from nn_dataflow.core import Resource
-
 from nn_dataflow.nns import import_network
+import matplotlib.pyplot as plt
+import pickle
+import csv
 
 class TestNNDataflow(unittest.TestCase):
     ''' Tests for NNDataflow module. '''
@@ -39,6 +77,13 @@ class TestNNDataflow(unittest.TestCase):
 
         self.alex_net = import_network('alex_net')
         self.vgg_net = import_network('vgg_net')
+        self.dense_net= import_network('densenet121')
+        self.squeeze_next= import_network('squeezenext')
+        self.res_net= import_network('resnet101')
+        self.mobile_net= import_network('mobilenet')
+        self.g_squeeze_next= import_network('group_squeezenext')
+        self.g_res_net= import_network('g_resnet101')
+        self.custom_net= import_network('custom_net')
 
         net = Network('simple')
         net.set_input_layer(InputLayer(4, 2))
@@ -73,8 +118,8 @@ class TestNNDataflow(unittest.TestCase):
                                  dst_data_region=NodeRegion(
                                      origin=PhyDim2(0, 0), dim=PhyDim2(1, 1),
                                      type=NodeRegion.DRAM),
-                                 dim_array=PhyDim2(16, 16),
-                                 size_gbuf=128 * 1024 // 2,  # 128 kB
+                                 dim_array=PhyDim2(16, 16),   
+                                 size_gbuf= 128 * 1024 // 2,  # 128 kB
                                  size_regf=512 // 2,  # 512 B
                                  array_bus_width=float('inf'),
                                  dram_bandwidth=float('inf'),
@@ -90,30 +135,30 @@ class TestNNDataflow(unittest.TestCase):
 
     def test_invalid_network(self):
         ''' Invalid network argument. '''
-        with self.assertRaisesRegex(TypeError, 'NNDataflow: .*network.*'):
+        with self.assertRaisesRegexp(TypeError, 'NNDataflow: .*network.*'):
             _ = NNDataflow(self.alex_net.input_layer(), 4,
                            self.resource, self.cost, self.map_strategy)
 
     def test_invalid_resource(self):
         ''' Invalid network argument. '''
-        with self.assertRaisesRegex(TypeError, 'NNDataflow: .*resource.*'):
+        with self.assertRaisesRegexp(TypeError, 'NNDataflow: .*resource.*'):
             _ = NNDataflow(self.alex_net, 4,
                            self.resource.proc_region, self.cost,
                            self.map_strategy)
 
     def test_invalid_cost(self):
         ''' Invalid network argument. '''
-        with self.assertRaisesRegex(TypeError, 'NNDataflow: .*cost.*'):
+        with self.assertRaisesRegexp(TypeError, 'NNDataflow: .*cost.*'):
             _ = NNDataflow(self.alex_net, 4,
                            self.resource, self.cost._asdict(),
                            self.map_strategy)
 
     def test_invalid_map_strategy(self):
         ''' Invalid map_strategy argument. '''
-        class _DummyClass():  # pylint: disable=too-few-public-methods
+        class _DummyClass(object):  # pylint: disable=too-few-public-methods
             pass
 
-        with self.assertRaisesRegex(TypeError, 'NNDataflow: .*map_strategy.*'):
+        with self.assertRaisesRegexp(TypeError, 'NNDataflow: .*map_strategy.*'):
             _ = NNDataflow(self.alex_net, 4,
                            self.resource, self.cost, _DummyClass)
 
@@ -132,8 +177,8 @@ class TestNNDataflow(unittest.TestCase):
 
         old_stdout = sys.stdout
         old_stderr = sys.stderr
-        sys.stdout = stdout = StringIO()
-        sys.stderr = stderr = StringIO()
+        sys.stdout = stdout = StringIO.StringIO()
+        sys.stderr = stderr = StringIO.StringIO()
 
         tops, _ = nnd.schedule_search(options)
 
@@ -410,8 +455,8 @@ class TestNNDataflow(unittest.TestCase):
 
         old_stdout = sys.stdout
         old_stderr = sys.stderr
-        sys.stdout = stdout = StringIO()
-        sys.stderr = stderr = StringIO()
+        sys.stdout = stdout = StringIO.StringIO()
+        sys.stderr = stderr = StringIO.StringIO()
 
         with self.assertRaises(NotImplementedError):
             _ = nnd.schedule_search(self.options)
@@ -426,77 +471,90 @@ class TestNNDataflow(unittest.TestCase):
         self.assertFalse(stdout_value)
         self.assertIn('Failed', stderr_value)
 
-    def test_eyeriss_isca16(self):
+    def test_eyeriss_isca16(self): #currently modified for the resnet global thing
         '''
         Reproduce Eyeriss ISCA'16 paper Fig. 10.
         '''
-        network = self.alex_net
 
-        batch_size = 16
+        network= self.alex_net
+        #network2= self.res_net
+        #network3 = self.dense_net
+        #network4= self.squeeze_next
+        #network5= self.mobile_net
+        #network6= self.g_squeeze_next
+        #network7= self.g_res_net
+        #network= self.custom_net
+        batch_size = 1
 
         nnd = NNDataflow(network, batch_size, self.resource, self.cost,
                          self.map_strategy)
+        #runs with batch_size and network as defined in the current method. The map_strategy,
+        #cost and resource are as defined in the setUp method (see class definition)
+
         tops, _ = nnd.schedule_search(self.options)
         self.assertTrue(tops)
         dfsch = tops[0]
-
-        ## Check results.
 
         # Results as cost for each component:
         header = 'ALU, DRAM, Buffer, Array, RF'
         cost_bkdn = {}
 
-        for layer in ['conv{}'.format(i) for i in range(1, 6)] \
-                + ['fc{}'.format(i) for i in range(1, 4)]:
-            op_cost = 0
-            access_cost = [0] * me.NUM
+        layer_list= [i for i in network.layer_dict.keys()]
+        layer_list.remove('__INPUT__')
 
-            for layer_part in network:
-                if not layer_part or not layer_part.startswith(layer):
-                    continue
-                sr = dfsch[layer_part]
-                op_cost += sr.total_ops * self.cost.mac_op
-                access_cost = [ac + a * c for ac, a, c
-                               in zip(access_cost, sr.total_accesses,
-                                      self.cost.mem_hier)]
+        for layer in layer_list:#['conv{}'.format(i) for i in range(1,15)]: #['bno1','bno2','bno3','bno4']:
 
-            cost_bkdn[layer] = []
+                op_cost = 0
+                access_cost = [0] * me.NUM
+
+                for layer_part in network:
+                    if not layer_part or not layer_part.startswith(layer):
+                        continue
+                    sr = dfsch[layer_part]
+                    op_cost += sr.total_ops * self.cost.mac_op
+                    access_cost = [ac + a * c for ac, a, c
+                        in zip(access_cost, sr.total_accesses,
+                                self.cost.mem_hier)]
+
+                cost_bkdn[layer] = []
+
             # To 1e9.
-            cost_bkdn[layer].append(op_cost / 1e9)
-            cost_bkdn[layer].append(access_cost[me.DRAM] / 1e9)
-            cost_bkdn[layer].append(access_cost[me.GBUF] / 1e9)
-            cost_bkdn[layer].append(access_cost[me.ITCN] / 1e9)
-            cost_bkdn[layer].append(access_cost[me.REGF] / 1e9)
+                cost_bkdn[layer].append(op_cost / 1e9)
+                cost_bkdn[layer].append(access_cost[me.DRAM] / 1e9)
+                cost_bkdn[layer].append(access_cost[me.GBUF] / 1e9)
+                cost_bkdn[layer].append(access_cost[me.ITCN] / 1e9)
+                cost_bkdn[layer].append(access_cost[me.REGF] / 1e9)
 
         # Check the major parts: ALU, DRAM, RF.
-        major_cost_bkdn_ref = {'conv1': [1.69, 2.46, 6.75],
-                               'conv2': [3.58, 2.27, 14.33],
-                               'conv3': [2.39, 2.02, 9.57],
-                               'conv4': [1.79, 1.57, 7.18],
-                               'conv5': [1.20, 1.05, 4.78],
-                               'fc1':   [0.60, 7.78, 2.42],
-                               'fc2':   [0.27, 3.39, 1.07],
-                               'fc3':   [0.07, 0.84, 0.26],
-                              }
-        for layer in cost_bkdn:
-            success = all(abs(a - b) < 0.1 for a, b
-                          in zip(cost_bkdn[layer][:2] + cost_bkdn[layer][-1:],
-                                 major_cost_bkdn_ref[layer]))
-            self.assertTrue(success,
-                            'test_eyeriss_isca16: '
-                            'ALU, DRAM, RF cost diff in layer {}.\n'
-                            'header: {}\n'
-                            'actual: {}\nref: {}'
-                            .format(layer, header, cost_bkdn[layer],
-                                    major_cost_bkdn_ref[layer]))
+        cost_bkdn['']= ['ALU', 'DRAM', 'Buffer', 'Array', 'RF']
+        keys = sorted(cost_bkdn.keys())
+        with open("isca_16_results.csv", "w") as outfile:
+            writer = csv.writer(outfile, delimiter = ",")
+            writer.writerow(keys)
+            writer.writerows(zip(*[cost_bkdn[key] for key in keys]))
 
-    def test_eyeriss_isscc16(self):
+        for layer in cost_bkdn:
+            print(str(layer)+"\n"+str(header)+"\n"+str(cost_bkdn[layer]))
+
+
+    def test_eyeriss_isscc16(self): #done
         '''
         Reproduce Eyeriss ISSCC'16 paper Fig. 14.5.6, JSSC'17 paper Table V.
         '''
-        network = self.alex_net
+        #network1 = self.alex_net
+        #network2= self.squeeze_next
+        #network3= self.res_net
+        network= self.mobile_net
+        #network5= self.g_squeeze_next
+        #network6= self.g_res_net
+        #network7= self.dense_net
+        #network8= self.custom_net
+        conv_list=[]
 
-        batch_size = 4
+
+        layer_list= [i for i in network.layer_dict.keys()]
+
+        
 
         resource = Resource(proc_region=NodeRegion(origin=PhyDim2(0, 0),
                                                    dim=PhyDim2(1, 1),
@@ -511,20 +569,26 @@ class TestNNDataflow(unittest.TestCase):
                                 origin=PhyDim2(0, 0), dim=PhyDim2(1, 1),
                                 type=NodeRegion.DRAM),
                             dim_array=PhyDim2(12, 14),
-                            size_gbuf=108 * 1024 // 2,  # 108 kB
-                            size_regf=261,  # 225 + 12 + 24
+                            size_gbuf=108 * 1024 //2,  # 108 kB     #have deleted that //2 factor and regf was 261
+                            size_regf= 261,  # 225 + 12 + 24
                             array_bus_width=float('inf'),
                             dram_bandwidth=float('inf'),
                             no_time_mux=False,
                            )
 
         cost = Cost(mac_op=2e-12,
-                    mem_hier=(460e-12, 15e-12, 4e-12, 1e-12),  # pJ/16-b
+                    mem_hier=( 460e-12, 15e-12, 4e-12, 1e-12),  # pJ/16-b
                     noc_hop=0,
                     idl_unit=30e-3 / 200e6)  # 30 mW GBUF + REGF
 
-        nnd = NNDataflow(network, batch_size, resource, cost,
-                         self.map_strategy)
+        #nnd = NNDataflow(network, batch_size, resource, cost,
+        #               self.map_strategy)
+
+        batch_size = 1
+        nnd= NNDataflow(network,batch_size, self.resource, self.cost,self.map_strategy)   #changeed from original case
+        #runs with batch_size and network as defined in the current method. The map_strategy,
+        #cost and resource are as defined in the setUp method (see class definition)
+
         tops, _ = nnd.schedule_search(self.options)
         self.assertTrue(tops)
         dfsch = tops[0]
@@ -535,13 +599,15 @@ class TestNNDataflow(unittest.TestCase):
         header = 'Power, Processing Latency, Ops, Active PEs, Filter size'
         stats = {}
 
-        for layer in ['conv{}'.format(i) for i in range(1, 6)]:
+        for layer in layer_list:
             onchip_cost = 0
             time = 0
             ops = 0
             fil_size = 0
 
             for layer_part in network:
+                if(layer=='__INPUT__'):
+                    continue
                 if not layer_part or not layer_part.startswith(layer):
                     continue
                 sr = dfsch[layer_part]
@@ -549,8 +615,11 @@ class TestNNDataflow(unittest.TestCase):
                         - sr.total_accesses[me.DRAM] * cost.mem_hier[me.DRAM]
                 time += sr.total_time
                 ops += sr.total_ops
-                fil_size += network[layer_part].total_filter_size()
 
+                #fil_size += network[layer_part].total_filter_size()
+
+            if(time==0):
+                continue
             power = onchip_cost / (time / 200e6) * 1e3  # mW
             active_pes = int(ops / time)
 
@@ -559,120 +628,20 @@ class TestNNDataflow(unittest.TestCase):
             stats[layer].append(time / 200.e3)  # cycles to ms
             stats[layer].append(ops / 1e6)  # to MOPs
             stats[layer].append(active_pes)
-            stats[layer].append(fil_size / 1e3)  # to k
-
-        # Check.
-        stats_ref = {'conv1': [332, 16.5, 421.66, 151, 34.8],  # Act PE 154
-                     'conv2': [288, 39.2, 895.79, 135, 307.2],
-                     'conv3': [266, 21.8, 598.1, 156, 884.7],
-                     'conv4': [235, 16.0, 448.6, 156, 663.6],
-                     'conv5': [236, 10.0, 299.0, 156, 442.4],
-                    }
-        for layer in stats:
-            success = (0.6 * stats_ref[layer][0]
-                       < stats[layer][0]
-                       < stats_ref[layer][0]) \
-                    and (0.8 * stats_ref[layer][1]
-                         < stats[layer][1]
-                         < stats_ref[layer][1]) \
-                    and all(abs(a - b) < 0.1 for a, b
-                            in zip(stats[layer][2:], stats_ref[layer][2:]))
-            self.assertTrue(success,
-                            'test_eyeriss_isscc16: '
-                            'stats diff in layer {}.\n'
-                            'header: {}\n'
-                            'actual: {}\nref: {}'
-                            .format(layer, header, stats[layer],
-                                    stats_ref[layer]))
-
-    def test_eyeriss_asplos17(self):
-        '''
-        Reproduce TETRIS ASPLOS'17 paper Figure 8.
-        '''
-        network = self.alex_net
-
-        batch_size = 16
-
-        ## L-1 configuration.
-
-        resource = Resource(proc_region=NodeRegion(origin=PhyDim2(0, 0),
-                                                   dim=PhyDim2(1, 1),
-                                                   type=NodeRegion.PROC),
-                            dram_region=NodeRegion(
-                                origin=PhyDim2(0, 0), dim=PhyDim2(1, 1),
-                                type=NodeRegion.DRAM),
-                            src_data_region=NodeRegion(
-                                origin=PhyDim2(0, 0), dim=PhyDim2(1, 1),
-                                type=NodeRegion.DRAM),
-                            dst_data_region=NodeRegion(
-                                origin=PhyDim2(0, 0), dim=PhyDim2(1, 1),
-                                type=NodeRegion.DRAM),
-                            dim_array=PhyDim2(16, 16),
-                            size_gbuf=576056 // 2,  # 576 kB
-                            size_regf=1024 // 2,  # 1 kB
-                            array_bus_width=float('inf'),
-                            dram_bandwidth=float('inf'),
-                            no_time_mux=False,
-                           )
-
-        cost = Cost(mac_op=2e-12,
-                    mem_hier=(240e-12, 28e-12, 4e-12, 1e-12),  # pJ/16-b
-                    noc_hop=0,
-                    idl_unit=320e-12)
-
-        nnd = NNDataflow(network, batch_size, resource, cost,
-                         self.map_strategy)
-        tops, _ = nnd.schedule_search(self.options)
-        self.assertTrue(tops)
-        dfsch_l1 = tops[0]
-
-        ## T-16 configuration.
-
-        resource = Resource(proc_region=NodeRegion(origin=PhyDim2(0, 0),
-                                                   dim=PhyDim2(4, 4),
-                                                   type=NodeRegion.PROC),
-                            dram_region=NodeRegion(
-                                origin=PhyDim2(0, 0), dim=PhyDim2(4, 4),
-                                type=NodeRegion.DRAM),
-                            src_data_region=NodeRegion(
-                                origin=PhyDim2(0, 0), dim=PhyDim2(4, 4),
-                                type=NodeRegion.DRAM),
-                            dst_data_region=NodeRegion(
-                                origin=PhyDim2(0, 0), dim=PhyDim2(4, 4),
-                                type=NodeRegion.DRAM),
-                            dim_array=PhyDim2(14, 14),
-                            size_gbuf=133032 // 2,  # 133 kB
-                            size_regf=512 // 2,  # 512 B
-                            array_bus_width=float('inf'),
-                            dram_bandwidth=float('inf'),
-                            no_time_mux=False,
-                           )
-
-        cost = Cost(mac_op=2e-12,
-                    mem_hier=(80e-12, 14e-12, 4e-12, 0.6e-12),  # pJ/16-b
-                    noc_hop=40e-12,
-                    idl_unit=200e-12)
-
-        options = Option(sw_gbuf_bypass=(True, True, True),
-                         sw_solve_loopblocking=True,
-                         partition_hybrid=True)
-
-        nnd = NNDataflow(network, batch_size, resource, cost,
-                         self.map_strategy)
-        tops, _ = nnd.schedule_search(options)
-        self.assertTrue(tops)
-        dfsch_t16 = tops[0]
-
-        ## Check results.
-
-        # Same workload.
-        self.assertAlmostEqual(dfsch_t16.total_ops, dfsch_l1.total_ops)
-
-        # Performance of T-16 is proportional to PE resource (20% margin).
-        self.assertLess(dfsch_t16.total_time,
-                        1.2 * dfsch_l1.total_time * (16 * 16) / (14 * 14 * 16))
-        # Energy reduced by > 30%.
-        # self.assertLess(dfsch_t16.total_cost, dfsch_l1.total_cost * 0.7)
-        # With dimension restriction on partitioning, this is slightly violated.
-        self.assertLess(dfsch_t16.total_cost, dfsch_l1.total_cost * 0.72)
+            #stats[layer].append(fil_size / 1e3)  # to k
+      
+        layer_list.remove('__INPUT__')
+        layer_list[0]= ''
+        stats['']= ['Power', 'Processing Latency', 'Ops', 'Active PEs']
+        keys= layer_list
+        
+        with open("isscc_16_results.csv", "w") as outfile:
+            writer = csv.writer(outfile, delimiter = ",")
+            writer.writerow(keys)
+            writer.writerows(zip(*[stats[key] for key in keys]))
+        import pdb;pdb.set_trace()
+            #print(str(layer)+"\n"+str(header)+"\n"+str(stats[layer])+"\n")
+        #with open('mobil_pe_dw','wb') as pi:
+        #    pickle.dump(stats,pi,protocol= pickle.HIGHEST_PROTOCOL)
+        #print("power_pickling_done")
 

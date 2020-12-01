@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -30,7 +31,6 @@ from .layer import Layer
 from .map_strategy import MapStrategy
 from .resource import Resource
 from .scheduling_constraint import SchedulingConstraint
-from .layer import G_convLayer
 
 class SchedulingCondition(namedtuple('SchedulingCondition',
                                      ['resource',
@@ -137,7 +137,7 @@ class SchedulingResult(namedtuple('SchedulingResult',
         return self.scheme['num_nodes']
 
 
-class Scheduling(object):
+class Scheduling():
     '''
     Layer scheduling.
     '''
@@ -154,7 +154,6 @@ class Scheduling(object):
                             'a subclass of MapStrategy.')
 
         self.layer = layer
-
         self.batch_size = batch_size
         self.cost = cost
         self.map_strategy_class = map_strategy_class
@@ -202,7 +201,6 @@ class Scheduling(object):
                                             proc_region.dim, options,
                                             guaranteed=True):
             # Explore single-node schedules.
-
             lbs_tops = list(self.schedule_search_per_node(
                 part, resource, condition.constraint, options))
             if not lbs_tops:
@@ -235,8 +233,6 @@ class Scheduling(object):
         # Check total op count.
         total_layer_ops = self.layer.total_ops(self.batch_size)
         for t in tops:
-            #print("opsss",total_layer_ops, t.total_ops)
-
             assert util.isclose(total_layer_ops, t.total_ops, rel_tol=1e-4)
 
         # Check ofmap layout matches the layer.
@@ -267,20 +263,16 @@ class Scheduling(object):
         lbs_tops = []
 
         # Partitioned layer.
-        #if isinstance(self.layer,G_convLayer):
-        #    print("before",self.layer.g)
         p_layer, p_batch_size, p_occ = part.part_layer(self.layer,
                                                        self.batch_size)
 
         # Mapping strategy.
-        #    print("after",p_layer.g)
         map_strategy = self.map_strategy_class(p_layer, p_batch_size, p_occ,
                                                resource.dim_array)
 
         # Explore PE array mapping schemes for partitioned layer.
         for nested_loop_desc in map_strategy.gen_nested_loop_desc():
 
-            #print("oops...",nested_loop_desc.total_ops)
             # Explore loop blocking schemes.
             for lbs in loop_blocking.gen_loopblocking(
                     nested_loop_desc, resource, part, constraint, self.cost,
@@ -334,7 +326,7 @@ class Scheduling(object):
         scheme['fetch'] = lbs.fetch
 
         # Loop blocking.
-        lp_ts = zip(*lbs.bl_ts)
+        lp_ts = list(zip(*lbs.bl_ts))
         scheme['ti'] = tuple(lp_ts[le.IFM])
         scheme['to'] = tuple(lp_ts[le.OFM])
         scheme['tb'] = tuple(lp_ts[le.BAT])
@@ -363,3 +355,4 @@ class Scheduling(object):
 
         return SchedulingResult(scheme=scheme, ofmap_layout=ofmap_layout,
                                 sched_seq=sched_seq)
+

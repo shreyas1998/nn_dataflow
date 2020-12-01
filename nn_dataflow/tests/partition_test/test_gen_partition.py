@@ -1,5 +1,6 @@
 """ $lic$
-Copyright (C) 2016-2019 by The Board of Trustees of Stanford University
+Copyright (C) 2016-2020 by Tsinghua University and The Board of Trustees of
+Stanford University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the Modified BSD-3 License as published by the Open Source
@@ -203,7 +204,7 @@ class TestGenPartition(TestPartitionFixture):
 
         for wlkey in self.layers:
             if wlkey.startswith('SSM'):
-                print wlkey
+                print(wlkey)
                 self.assertEqual(len(list(self._gen_partition(wlkey=wlkey,
                                                               optkey=optkey))),
                                  0)
