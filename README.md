@@ -6,14 +6,12 @@ Performance of DNNs on Systolic Accelerator) which will be presented in [ISVLSI-
 
 ## Installation
 
-This has been tested on python 2.7.17.
-
-Install [Microsoft visual c++ compiler for python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266)
+This has been tested on python 3.5
 
 Install matplotlib using [pip](https://pip.pypa.io/en/stable/).
-Use [pip](https://pip.pypa.io/en/stable/) to install nn-dataflow. There is a newer version of nn-dataflow for python3, however at the time of development an older version was used.
+Use [pip](https://pip.pypa.io/en/stable/) to install nn-dataflow. 
 ```bash
-pip install nn-dataflow==2.0
+pip install nn-dataflow
 ```
 
 Once the simulator has been installed replace the core and nns directory in the library with the one given in the update branch of this repository.
